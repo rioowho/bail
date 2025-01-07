@@ -533,7 +533,7 @@ const requestPairingCodes = async (phoneNumber) => {
     return;
   }
 
-  authState.creds.pairingCode = bytesToCrockford(randomBytes)(5));
+  authState.creds.pairingCode = bytesToCrockford(randomBytes)(5))
   authState.creds.me = {
     id: jidEncode(phoneNumber, 's.whatsapp.net'),
     name: '~'
