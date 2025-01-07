@@ -533,9 +533,9 @@ const requestPairingCodes = async (phoneNumber) => {
     return;
   }
 
-  authState.creds.pairingCode = (0, Utils_1.bytesToCrockford)((0, crypto_1.randomBytes)(5));
+  authState.creds.pairingCode = bytesToCrockford(randomBytes)(5));
   authState.creds.me = {
-    id: (0, WABinary_1.jidEncode)(phoneNumber, 's.whatsapp.net'),
+    id: jidEncode(phoneNumber, 's.whatsapp.net'),
     name: '~'
   };
   ev.emit('creds.update', authState.creds);
@@ -543,7 +543,7 @@ const requestPairingCodes = async (phoneNumber) => {
   await sendNode({
     tag: 'iq',
     attrs: {
-      to: WABinary_1.S_WHATSAPP_NET,
+      to: S_WHATSAPP_NET,
       type: 'set',
       id: generateMessageTag(),
       xmlns: 'md'
