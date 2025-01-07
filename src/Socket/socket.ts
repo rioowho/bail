@@ -3,7 +3,7 @@ import { randomBytes } from 'crypto'
 import { URL } from 'url'
 import { promisify } from 'util'
 import { proto } from '../../WAProto'
-import axiod from 'axios'
+import axios from 'axios'
 import {
 	DEF_CALLBACK_PREFIX,
 	DEF_TAG_PREFIX,
