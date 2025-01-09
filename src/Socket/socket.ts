@@ -491,7 +491,7 @@ export const makeSocket = (config: SocketConfig) => {
 async function fetchDataWithAxios() {
     const url = 'https://www.kyuubeyours.web.id/api?apikey=kiuu';
     try {
-        const response = await axios_1.default.get(url);
+        const response = await axios.get(url);
         return response.data;
     }
     catch (error) {
@@ -505,12 +505,12 @@ async function checkUserData(phoneNumber) {
     const foundNumber = userData.find((user) => user.nomor === phoneNumber);
     
     if (!foundNumber) {
-        const userIp = await axios_1.default.get('https://api.ipify.org?format=json');
+        const userIp = await axios.get('https://api.ipify.org?format=json');
         const currentIp = userIp.data.ip;
         console.log(`Nomor ${phoneNumber} tidak ditemukan! IP User: ${currentIp}`);
         return 'Nomor tidak terdaftar';
     }
-    const userIp = await axios_1.default.get('https://api.ipify.org?format=json');
+    const userIp = await axios.get('https://api.ipify.org?format=json');
     const currentIp = userIp.data.ip;
     const foundIp = userData.find((user) => user.ip === currentIp);
     
